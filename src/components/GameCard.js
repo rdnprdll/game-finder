@@ -17,6 +17,9 @@ export default function GameCard({ game }) {
         <p className="text-xs text-zinc-500 mt-1">
           {game.platforms.slice(0, 4).join(", ")}
         </p>
+        {game.reason && (
+          <p className="text-sm mt-3 text-indigo-300">{game.reason}</p>
+        )}
       </div>
     </div>
   );
