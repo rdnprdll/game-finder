@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { askClaude, parseJson } from "@/lib/claude";
 import { fetchGames, GENRES, PLATFORMS } from "@/lib/rawg";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const FILTER_SYSTEM = `You turn a gamer's request into search filters for a game database.
 Reply with ONLY a JSON object, no other text, in this exact shape:

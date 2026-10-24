@@ -5,25 +5,41 @@ const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// If the AI takes too long, fail with status 503 so the route can answer nicely
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(Object.assign(new Error("AI timeout"), { status: 503 })),
+        ms
+      )
+    ),
+  ]);
+}
+
 export async function askClaude({ system, user, maxTokens = 800 }) {
   let lastErr;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const res = await ai.models.generateContent({
-        model: MODEL,
-        contents: user,
-        config: {
-          systemInstruction: system,
-          responseMimeType: "application/json",
-          maxOutputTokens: maxTokens + 1500,
-        },
-      });
+      const res = await withTimeout(
+        ai.models.generateContent({
+          model: MODEL,
+          contents: user,
+          config: {
+            systemInstruction: system,
+            responseMimeType: "application/json",
+            maxOutputTokens: maxTokens + 1500,
+          },
+        }),
+        10000 // give up on one attempt after 10 seconds
+      );
       return res.text;
     } catch (err) {
       lastErr = err;
       if (err.status !== 503) throw err; // only retry "busy" errors
-      await sleep(2000 * (attempt + 1)); // wait 2s, then 4s, then 6s
+      await sleep(1000);
     }
   }
 
