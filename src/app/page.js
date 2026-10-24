@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import GameCard from "@/components/GameCard";
+import { useAuth } from "@/components/AuthProvider";
+import { useLists } from "@/lib/lists";
 
 const EXAMPLES = [
   "I liked Hades and Hollow Knight, something similar on PC",
@@ -9,6 +12,9 @@ const EXAMPLES = [
 ];
 
 export default function Home() {
+  const { user, loading: authLoading, signIn, logOut } = useAuth();
+  const { saved, hidden, savedIds, saveGame, unsaveGame, hideGame } = useLists(user);
+
   const [message, setMessage] = useState("");
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +30,7 @@ export default function Home() {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, exclude: hidden }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Something went wrong.");
@@ -36,9 +42,43 @@ export default function Home() {
     }
   }
 
+  function handleToggleSave(game) {
+    if (!user) return signIn();
+    if (savedIds.has(game.id)) unsaveGame(game.id);
+    else saveGame(game);
+  }
+
+  function handleHide(game) {
+    if (!user) return signIn();
+    hideGame(game);
+    setGames((prev) => prev.filter((g) => g.id !== game.id));
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-1">Game Finder</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-3xl font-bold">Game Finder</h1>
+        <div className="flex items-center gap-3 text-sm">
+          {user && (
+            <Link href="/saved" className="underline text-zinc-300">
+              My list ({saved.length})
+            </Link>
+          )}
+          {authLoading ? null : user ? (
+            <>
+              <span className="text-zinc-400 hidden sm:inline">{user.displayName}</span>
+              <button onClick={logOut} className="rounded-lg bg-zinc-800 px-3 py-1 hover:bg-zinc-700">
+                Sign out
+              </button>
+            </>
+          ) : (
+            <button onClick={signIn} className="rounded-lg bg-zinc-800 px-3 py-1 hover:bg-zinc-700">
+              Sign in with Google
+            </button>
+          )}
+        </div>
+      </div>
+
       <p className="text-zinc-400 mb-6">
         Tell me what you like, what you play on, and how much time you have.
       </p>
@@ -79,12 +119,18 @@ export default function Home() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {games.map((g) => (
-          <GameCard key={g.id} game={g} />
+          <GameCard
+            key={g.id}
+            game={g}
+            saved={savedIds.has(g.id)}
+            onToggleSave={handleToggleSave}
+            onHide={handleHide}
+          />
         ))}
       </div>
 
       <p className="text-xs text-zinc-600 mt-10">
-        Game data from RAWG. <a href="/search" className="underline">Search by title</a>
+        Game data from RAWG. <Link href="/search" className="underline">Search by title</Link>
       </p>
     </main>
   );

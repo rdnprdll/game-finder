@@ -30,6 +30,14 @@ export async function POST(request) {
       );
     }
 
+    // Games the user marked "Not interested" (don't trust the input, clean it)
+    const exclude = new Set(
+      (Array.isArray(body.exclude) ? body.exclude : [])
+        .slice(0, 300)
+        .map(Number)
+        .filter(Number.isFinite)
+    );
+
     // Step 1: message -> filters
     const filterText = await askClaude({
       system: FILTER_SYSTEM,
@@ -54,6 +62,7 @@ export async function POST(request) {
     }
     candidates = candidates
       .filter((g) => !liked.some((n) => g.name.toLowerCase().includes(n)))
+      .filter((g) => !exclude.has(g.id))
       .slice(0, 20);
 
     if (candidates.length === 0) {
