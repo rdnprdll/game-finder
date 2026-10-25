@@ -19,7 +19,7 @@ export function useLists(user) {
       setSavedState({ uid, items: snap.docs.map((d) => d.data()) })
     );
     const unsubHidden = onSnapshot(collection(db, "users", uid, "hidden"), (snap) =>
-      setHiddenState({ uid, items: snap.docs.map((d) => d.data().id) })
+      setHiddenState({ uid, items: snap.docs.map((d) => d.data()) })
     );
 
     return () => {
@@ -29,7 +29,8 @@ export function useLists(user) {
   }, [uid]);
 
   const saved = uid && savedState.uid === uid ? savedState.items : [];
-  const hidden = uid && hiddenState.uid === uid ? hiddenState.items : [];
+  const hiddenItems = uid && hiddenState.uid === uid ? hiddenState.items : [];
+  const hidden = hiddenItems.map((h) => h.id);
 
   async function saveGame(game) {
     await setDoc(doc(db, "users", uid, "saved", String(game.id)), {
@@ -57,12 +58,18 @@ export function useLists(user) {
     });
   }
 
+  async function unhideGame(id) {
+    await deleteDoc(doc(db, "users", uid, "hidden", String(id)));
+  }
+
   return {
     saved,
     hidden,
+    hiddenItems,
     savedIds: new Set(saved.map((g) => g.id)),
     saveGame,
     unsaveGame,
     hideGame,
+    unhideGame,
   };
 }

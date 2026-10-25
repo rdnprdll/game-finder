@@ -22,7 +22,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [light, setLight] = useState(false);
 
-  async function search() {
+  async function search(text) {
+    const query = typeof text === "string" ? text : message;
     setLoading(true);
     setError("");
     setGames([]);
@@ -31,7 +32,7 @@ export default function Home() {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, exclude: hidden, light }),
+        body: JSON.stringify({ message: query, exclude: hidden, light }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Something went wrong.");
@@ -46,6 +47,13 @@ export default function Home() {
   function handleSubmit(e) {
     e.preventDefault();
     search();
+  }
+
+  function handleMoreLike(game) {
+    const text = `games like ${game.name}`;
+    setMessage(text);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    search(text);
   }
 
   function handleToggleSave(game) {
@@ -66,9 +74,14 @@ export default function Home() {
         <h1 className="text-3xl font-bold">Game Finder</h1>
         <div className="flex items-center gap-3 text-sm">
           {user && (
-            <Link href="/saved" className="underline text-zinc-300">
-              My list ({saved.length})
-            </Link>
+            <>
+              <Link href="/saved" className="underline text-zinc-300">
+                My list ({saved.length})
+              </Link>
+              <Link href="/hidden" className="underline text-zinc-400">
+                Hidden ({hidden.length})
+              </Link>
+            </>
           )}
           {authLoading ? null : user ? (
             <>
@@ -135,7 +148,7 @@ export default function Home() {
         <div className="flex items-center gap-3 mb-4">
           <p className="text-red-400">{error}</p>
           <button
-            onClick={search}
+            onClick={() => search()}
             disabled={loading}
             className="rounded-lg bg-zinc-800 px-3 py-1 text-sm hover:bg-zinc-700 disabled:opacity-50"
           >
@@ -154,6 +167,7 @@ export default function Home() {
               saved={savedIds.has(g.id)}
               onToggleSave={handleToggleSave}
               onHide={handleHide}
+              onMoreLike={handleMoreLike}
             />
           ))}
       </div>
