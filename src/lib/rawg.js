@@ -13,7 +13,7 @@ export const PLATFORMS = {
   switch: 7,
 };
 
-export async function fetchGames({ genres, platforms, keywords, minMetacritic }) {
+export async function fetchGames({ genres, platforms, keywords, minMetacritic, dates }) {
   const url = new URL("https://api.rawg.io/api/games");
   url.searchParams.set("key", process.env.RAWG_API_KEY);
   url.searchParams.set("page_size", "30");
@@ -22,6 +22,7 @@ export async function fetchGames({ genres, platforms, keywords, minMetacritic })
   if (platforms.length) url.searchParams.set("platforms", platforms.join(","));
   if (keywords) url.searchParams.set("search", keywords);
   if (minMetacritic > 0) url.searchParams.set("metacritic", `${minMetacritic},100`);
+  if (dates) url.searchParams.set("dates", dates);
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("RAWG request failed");

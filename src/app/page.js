@@ -20,6 +20,7 @@ export default function Home() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [light, setLight] = useState(false);
 
   async function search() {
     setLoading(true);
@@ -30,7 +31,7 @@ export default function Home() {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, exclude: hidden }),
+        body: JSON.stringify({ message, exclude: hidden, light }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Something went wrong.");
@@ -97,6 +98,16 @@ export default function Home() {
           placeholder="e.g. I liked Hades and Hollow Knight, I play on PC"
           className="w-full rounded-lg bg-zinc-900 px-4 py-3 outline-none"
         />
+
+        <label className="flex items-center gap-2 mt-2 text-sm text-zinc-300 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={light}
+            onChange={(e) => setLight(e.target.checked)}
+          />
+          Lighter games for weak PCs (released 2020 or earlier)
+        </label>
+
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-zinc-500">{message.length}/500</span>
           <button
@@ -134,8 +145,7 @@ export default function Home() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading &&
-          [0, 1, 2].map((i) => <GameCardSkeleton key={i} />)}
+        {loading && [0, 1, 2].map((i) => <GameCardSkeleton key={i} />)}
         {!loading &&
           games.map((g) => (
             <GameCard
