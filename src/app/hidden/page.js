@@ -1,43 +1,40 @@
 "use client";
-import Link from "next/link";
+import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { useLists } from "@/lib/lists";
 
 export default function Hidden() {
   const { user, loading, signIn } = useAuth();
-  const { hiddenItems, unhideGame } = useLists(user);
+  const { saved, hiddenItems, unhideGame } = useLists(user);
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white p-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Not interested</h1>
-        <Link href="/" className="underline text-sm text-zinc-300">
-          Back to recommendations
-        </Link>
-      </div>
+    <main className="mx-auto max-w-3xl px-5 py-6 sm:px-8">
+      <Header savedCount={saved.length} hiddenCount={hiddenItems.length} />
+      <h1 className="text-4xl font-extrabold tracking-tight">Games you hid</h1>
+      <p className="mt-2 text-muted">These will not show up in your recommendations.</p>
 
       {loading ? (
-        <p className="text-zinc-400">Loading...</p>
+        <p className="mt-6 text-muted">Loading...</p>
       ) : !user ? (
-        <div>
-          <p className="text-zinc-400 mb-3">Sign in to see games you hid.</p>
-          <button onClick={signIn} className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold">
+        <div className="mt-6">
+          <p className="mb-4 text-muted">Sign in to see the games you hid.</p>
+          <button
+            onClick={signIn}
+            className="rounded-full bg-cobalt px-6 py-2.5 font-semibold text-white hover:bg-cobalt-dark"
+          >
             Sign in with Google
           </button>
         </div>
       ) : hiddenItems.length === 0 ? (
-            <p className="text-zinc-400">You have not hidden any games.</p>
+        <p className="mt-6 text-muted">You have not hidden any games.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="mt-6 divide-y divide-line border-y border-line">
           {hiddenItems.map((g) => (
-            <li
-              key={g.id}
-              className="flex items-center justify-between rounded-lg bg-zinc-900 px-4 py-3"
-            >
-              <span>{g.name}</span>
+            <li key={g.id} className="flex items-center justify-between gap-4 py-3">
+              <span className="font-medium">{g.name}</span>
               <button
                 onClick={() => unhideGame(g.id)}
-                className="rounded-lg bg-zinc-800 px-3 py-1 text-sm hover:bg-zinc-700"
+                className="rounded-full border border-ink/30 px-4 py-1.5 text-sm font-medium hover:bg-ink hover:text-paper"
               >
                 Show again
               </button>

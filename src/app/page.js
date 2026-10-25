@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import GameCard from "@/components/GameCard";
 import GameCardSkeleton from "@/components/GameCardSkeleton";
 import GameModal from "@/components/GameModal";
+import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { useLists } from "@/lib/lists";
 
@@ -15,7 +15,7 @@ const EXAMPLES = [
 ];
 
 export default function Home() {
-  const { user, loading: authLoading, signIn, logOut } = useAuth();
+  const { user, signIn } = useAuth();
   const { saved, hidden, savedIds, saveGame, unsaveGame, hideGame } = useLists(user);
 
   const [message, setMessage] = useState("");
@@ -41,7 +41,7 @@ export default function Home() {
       if (!res.ok) setError(data.error || "Something went wrong.");
       else setGames(data.games);
     } catch {
-      setError("Can't reach the server.");
+      setError("Can not reach the server. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -72,100 +72,88 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-3xl font-bold">Game Finder</h1>
-        <div className="flex items-center gap-3 text-sm">
-          {user && (
-            <>
-              <Link href="/saved" className="underline text-zinc-300">
-                My list ({saved.length})
-              </Link>
-              <Link href="/hidden" className="underline text-zinc-400">
-                Hidden ({hidden.length})
-              </Link>
-            </>
-          )}
-          {authLoading ? null : user ? (
-            <>
-              <span className="text-zinc-400 hidden sm:inline">{user.displayName}</span>
-              <button onClick={logOut} className="rounded-lg bg-zinc-800 px-3 py-1 hover:bg-zinc-700">
-                Sign out
-              </button>
-            </>
-          ) : (
-            <button onClick={signIn} className="rounded-lg bg-zinc-800 px-3 py-1 hover:bg-zinc-700">
-              Sign in with Google
-            </button>
-          )}
-        </div>
-      </div>
+    <main className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
+      <Header savedCount={saved.length} hiddenCount={hidden.length} />
 
-      <p className="text-zinc-400 mb-6">
-        Tell me what you like, what you play on, and how much time you have.
-      </p>
+      <section className="max-w-3xl">
+        <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+          What do you feel like playing?
+        </h1>
+        <p className="mt-4 max-w-prose font-serif text-xl leading-relaxed text-muted">
+          Say what you liked, what you play on, and how much time you have. You get five games
+          back, each with a short note on why it fits.
+        </p>
 
-      <form onSubmit={handleSubmit} className="mb-4">
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          maxLength={500}
-          rows={3}
-          placeholder="e.g. I liked Hades and Hollow Knight, I play on PC"
-          className="w-full rounded-lg bg-zinc-900 px-4 py-3 outline-none"
-        />
-
-        <label className="flex items-center gap-2 mt-2 text-sm text-zinc-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={light}
-            onChange={(e) => setLight(e.target.checked)}
+        <form onSubmit={handleSubmit} className="mt-8">
+          <label htmlFor="request" className="sr-only">
+            Describe what you want to play
+          </label>
+          <textarea
+            id="request"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            maxLength={500}
+            rows={3}
+            placeholder="e.g. I liked Hades and Hollow Knight, I play on PC"
+            className="w-full resize-y rounded-xl border border-line bg-surface px-5 py-4 font-serif text-xl leading-snug placeholder:text-muted/70"
           />
-          Lighter games for weak PCs (released 2020 or earlier)
-        </label>
 
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-zinc-500">{message.length}/500</span>
-          <button
-            disabled={loading || message.trim().length < 5}
-            className="rounded-lg bg-indigo-600 px-5 py-2 font-semibold hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {loading ? "Thinking..." : "Recommend"}
-          </button>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={light}
+                onChange={(e) => setLight(e.target.checked)}
+                className="h-4 w-4 accent-cobalt"
+              />
+              Lighter games for weak PCs (released 2020 or earlier)
+            </label>
+
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted">{message.length}/500</span>
+              <button
+                disabled={loading || message.trim().length < 5}
+                className="rounded-full bg-cobalt px-6 py-2.5 font-semibold text-white hover:bg-cobalt-dark disabled:opacity-50"
+              >
+                {loading ? "Looking..." : "Find games"}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex}
+              onClick={() => setMessage(ex)}
+              className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-cobalt"
+            >
+              {ex}
+            </button>
+          ))}
         </div>
-      </form>
-
-      <div className="flex flex-wrap gap-2 mb-6">
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex}
-            onClick={() => setMessage(ex)}
-            className="text-xs rounded-full bg-zinc-900 px-3 py-1 text-zinc-300 hover:bg-zinc-800"
-          >
-            {ex}
-          </button>
-        ))}
-      </div>
+      </section>
 
       {error && (
-        <div className="flex items-center gap-3 mb-4">
-          <p className="text-red-400">{error}</p>
+        <div role="alert" className="mt-8 flex flex-wrap items-center gap-4">
+          <p className="text-alert">{error}</p>
           <button
             onClick={() => search()}
             disabled={loading}
-            className="rounded-lg bg-zinc-800 px-3 py-1 text-sm hover:bg-zinc-700 disabled:opacity-50"
+            className="rounded-full border border-ink/30 px-4 py-1.5 text-sm font-medium hover:bg-ink hover:text-paper disabled:opacity-50"
           >
             Try again
           </button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <section className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {loading && [0, 1, 2].map((i) => <GameCardSkeleton key={i} />)}
         {!loading &&
-          games.map((g) => (
+          games.map((g, i) => (
             <GameCard
               key={g.id}
+              index={i}
               game={g}
               saved={savedIds.has(g.id)}
               onToggleSave={handleToggleSave}
@@ -174,11 +162,15 @@ export default function Home() {
               onDetails={(game) => setDetailId(game.id)}
             />
           ))}
-      </div>
+      </section>
 
-      <p className="text-xs text-zinc-600 mt-10">
-        Game data from RAWG. <Link href="/search" className="underline">Search by title</Link>
-      </p>
+      <footer className="mt-16 text-sm text-muted">
+        Game data from{" "}
+        <a href="https://rawg.io" target="_blank" rel="noopener noreferrer" className="underline">
+          RAWG
+        </a>
+        .
+      </footer>
 
       {detailId && (
         <GameModal key={detailId} gameId={detailId} onClose={() => setDetailId(null)} />

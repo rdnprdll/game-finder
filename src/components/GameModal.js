@@ -35,42 +35,43 @@ export default function GameModal({ gameId, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/60 p-4"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Game details"
-        className="my-8 w-full max-w-2xl rounded-xl bg-zinc-900 p-5 text-white"
+        className="my-8 w-full max-w-2xl rounded-md border border-line bg-surface p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-2xl font-bold">{data ? data.name : "Loading..."}</h2>
+          <h2 className="text-3xl font-extrabold leading-tight tracking-tight">
+            {data ? data.name : "Loading"}
+          </h2>
           <button
             onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg bg-zinc-800 px-3 py-1 hover:bg-zinc-700"
+            className="shrink-0 rounded-full border border-ink/30 px-4 py-1.5 text-sm font-medium hover:bg-ink hover:text-paper"
           >
-            ✕
+            Close
           </button>
         </div>
 
-        {status === "loading" && <p className="mt-4 text-zinc-400">Loading details...</p>}
-        {status === "error" && <p className="mt-4 text-red-400">{error}</p>}
+        {status === "loading" && <p className="mt-4 text-muted">Loading details...</p>}
+        {status === "error" && (
+          <p role="alert" className="mt-4 text-alert">
+            {error}
+          </p>
+        )}
 
         {status === "done" && (
-          <div className="mt-3 space-y-4">
-            <p className="text-sm text-zinc-400">
-              {[
-                data.released,
-                data.rating ? `⭐ ${data.rating}` : null,
-                data.metacritic ? `Metacritic ${data.metacritic}` : null,
-                data.playtime ? `about ${data.playtime} hours` : null,
-                data.esrb,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
+          <div className="mt-4 space-y-5">
+            <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+              {data.released && <span>{data.released}</span>}
+              {data.rating ? <span>Rated {data.rating} out of 5</span> : null}
+              {data.metacritic ? <span>Metacritic {data.metacritic}</span> : null}
+              {data.playtime ? <span>About {data.playtime} hours to play</span> : null}
+              {data.esrb && <span>{data.esrb}</span>}
             </p>
 
             {data.genres.length > 0 && <p className="text-sm">{data.genres.join(", ")}</p>}
@@ -82,31 +83,27 @@ export default function GameModal({ gameId, onClose }) {
                     key={src}
                     src={src}
                     alt={`Screenshot of ${data.name}`}
-                    className="rounded-lg object-cover"
+                    className="rounded-sm object-cover"
                   />
                 ))}
               </div>
             )}
 
             {data.description && (
-              <p className="text-sm leading-relaxed text-zinc-200">{data.description}</p>
+              <p className="max-w-prose font-serif text-lg leading-relaxed">{data.description}</p>
             )}
 
             {data.developers.length > 0 && (
-              <p className="text-sm text-zinc-400">By {data.developers.join(", ")}</p>
+              <p className="text-sm text-muted">Made by {data.developers.join(", ")}</p>
             )}
 
             {data.pc && (
-              <details className="rounded-lg bg-zinc-800 p-3 text-sm">
+              <details className="rounded-md border border-line p-3 text-sm">
                 <summary className="cursor-pointer font-semibold">
                   PC requirements (from RAWG, may be incomplete)
                 </summary>
-                {data.pc.minimum && (
-                  <p className="mt-2 text-zinc-300">{data.pc.minimum}</p>
-                )}
-                {data.pc.recommended && (
-                  <p className="mt-2 text-zinc-300">{data.pc.recommended}</p>
-                )}
+                {data.pc.minimum && <p className="mt-2 text-muted">{data.pc.minimum}</p>}
+                {data.pc.recommended && <p className="mt-2 text-muted">{data.pc.recommended}</p>}
               </details>
             )}
 
@@ -118,7 +115,7 @@ export default function GameModal({ gameId, onClose }) {
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg bg-indigo-600 px-3 py-1 text-sm hover:bg-indigo-500"
+                    className="rounded-full bg-cobalt px-4 py-1.5 text-sm font-semibold text-white hover:bg-cobalt-dark"
                   >
                     {s.name}
                   </a>
@@ -128,7 +125,7 @@ export default function GameModal({ gameId, onClose }) {
                     href={data.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg bg-zinc-800 px-3 py-1 text-sm hover:bg-zinc-700"
+                    className="rounded-full border border-ink/30 px-4 py-1.5 text-sm font-medium hover:bg-ink hover:text-paper"
                   >
                     Official site
                   </a>
@@ -136,7 +133,7 @@ export default function GameModal({ gameId, onClose }) {
               </div>
             )}
 
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted">
               Data from{" "}
               <a
                 href={`https://rawg.io/games/${data.slug}`}
