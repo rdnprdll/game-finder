@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import GameCard from "@/components/GameCard";
 import GameCardSkeleton from "@/components/GameCardSkeleton";
+import GameModal from "@/components/GameModal";
 import { useAuth } from "@/components/AuthProvider";
 import { useLists } from "@/lib/lists";
 
@@ -21,6 +22,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [light, setLight] = useState(false);
+  const [detailId, setDetailId] = useState(null);
 
   async function search(text) {
     const query = typeof text === "string" ? text : message;
@@ -168,6 +170,7 @@ export default function Home() {
               onToggleSave={handleToggleSave}
               onHide={handleHide}
               onMoreLike={handleMoreLike}
+              onDetails={(game) => setDetailId(game.id)}
             />
           ))}
       </div>
@@ -175,6 +178,10 @@ export default function Home() {
       <p className="text-xs text-zinc-600 mt-10">
         Game data from RAWG. <Link href="/search" className="underline">Search by title</Link>
       </p>
+
+      {detailId && (
+        <GameModal key={detailId} gameId={detailId} onClose={() => setDetailId(null)} />
+      )}
     </main>
   );
 }

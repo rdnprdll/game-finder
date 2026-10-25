@@ -1,4 +1,6 @@
-export default function GameCard({ game, saved, onToggleSave, onHide, onMoreLike }) {
+export default function GameCard({
+  game, saved, onToggleSave, onHide, onMoreLike, onDetails,
+}) {
   return (
     <div className="rounded-xl overflow-hidden bg-zinc-900 text-white shadow flex flex-col">
       {game.image ? (
@@ -48,13 +50,25 @@ export default function GameCard({ game, saved, onToggleSave, onHide, onMoreLike
           </div>
         )}
 
-        {onMoreLike && (
-          <button
-            onClick={() => onMoreLike(game)}
-            className="mt-2 text-sm text-indigo-300 hover:text-indigo-200 text-left"
-          >
-            More like this →
-          </button>
+        {(onDetails || onMoreLike) && (
+          <div className="mt-2 flex gap-4 text-sm">
+            {onDetails && (
+              <button
+                onClick={() => onDetails(game)}
+                className="text-indigo-300 hover:text-indigo-200"
+              >
+                Details
+              </button>
+            )}
+            {onMoreLike && (
+              <button
+                onClick={() => onMoreLike(game)}
+                className="text-indigo-300 hover:text-indigo-200"
+              >
+                More like this →
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
