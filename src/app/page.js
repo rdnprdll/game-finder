@@ -11,6 +11,7 @@ const EXAMPLES = [
   "I liked Hades and Hollow Knight, something similar on PC",
   "cozy games I can play on Switch in short sessions",
   "highly rated story-driven RPGs",
+  "chill na laro na pang-laptop lang, pang-30 minutes lang",
 ];
 
 export default function Home() {
