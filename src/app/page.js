@@ -35,7 +35,12 @@ export default function Home() {
       const res = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: query, exclude: hidden, light }),
+        body: JSON.stringify({
+          message: query,
+          exclude: [...hidden, ...saved.map((g) => g.id)],
+          taste: saved.slice(0, 12).map((g) => g.name),
+          light,
+        }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Something went wrong.");
