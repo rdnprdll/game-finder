@@ -1,17 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// If the AI takes too long, fail with status 503 so the route can answer nicely
 function withTimeout(promise, ms) {
   return Promise.race([
     promise,
     new Promise((_, reject) =>
       setTimeout(
-        () => reject(Object.assign(new Error("AI timeout"), { status: 503 })),
+        () => reject(Object.assign(new Error("AI timeout"), { status: 504 })),
         ms
       )
     ),
@@ -33,12 +32,12 @@ export async function askClaude({ system, user, maxTokens = 800 }) {
             maxOutputTokens: maxTokens + 1500,
           },
         }),
-        10000 // give up on one attempt after 10 seconds
+        15000
       );
       return res.text;
     } catch (err) {
       lastErr = err;
-      if (err.status !== 503) throw err; // only retry "busy" errors
+      if (err.status !== 503) throw err; // retry only when Google says "busy"
       await sleep(1000);
     }
   }
@@ -46,7 +45,6 @@ export async function askClaude({ system, user, maxTokens = 800 }) {
   throw lastErr;
 }
 
-// Grab just the {...} part in case the AI adds extra text
 export function parseJson(text) {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import GameCard from "@/components/GameCard";
+import GameCardSkeleton from "@/components/GameCardSkeleton";
 import { useAuth } from "@/components/AuthProvider";
 import { useLists } from "@/lib/lists";
 
@@ -20,8 +21,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
+  async function search() {
     setLoading(true);
     setError("");
     setGames([]);
@@ -40,6 +40,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    search();
   }
 
   function handleToggleSave(game) {
@@ -115,18 +120,32 @@ export default function Home() {
         ))}
       </div>
 
-      {error && <p className="text-red-400 mb-4">{error}</p>}
+      {error && (
+        <div className="flex items-center gap-3 mb-4">
+          <p className="text-red-400">{error}</p>
+          <button
+            onClick={search}
+            disabled={loading}
+            className="rounded-lg bg-zinc-800 px-3 py-1 text-sm hover:bg-zinc-700 disabled:opacity-50"
+          >
+            Try again
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {games.map((g) => (
-          <GameCard
-            key={g.id}
-            game={g}
-            saved={savedIds.has(g.id)}
-            onToggleSave={handleToggleSave}
-            onHide={handleHide}
-          />
-        ))}
+        {loading &&
+          [0, 1, 2].map((i) => <GameCardSkeleton key={i} />)}
+        {!loading &&
+          games.map((g) => (
+            <GameCard
+              key={g.id}
+              game={g}
+              saved={savedIds.has(g.id)}
+              onToggleSave={handleToggleSave}
+              onHide={handleHide}
+            />
+          ))}
       </div>
 
       <p className="text-xs text-zinc-600 mt-10">

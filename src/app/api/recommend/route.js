@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { askClaude, parseJson } from "@/lib/claude";
 import { fetchGames, GENRES, PLATFORMS } from "@/lib/rawg";
+import { rateLimit } from "@/lib/rateLimit";
 
-export const maxDuration = 60;
+export const maxDuration = 30;
 
 const FILTER_SYSTEM = `You turn a gamer's request into search filters for a game database.
 Reply with ONLY a JSON object, no other text, in this exact shape:
@@ -23,6 +24,19 @@ Rules: use the exact id from the list. Never add games that are not in the list.
 
 export async function POST(request) {
   try {
+    // Rate limits: per visitor, and for the whole site
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const mine = rateLimit(`ip:${ip}`, { limit: 3, windowMs: 60_000 });
+    const everyone = rateLimit("global", { limit: 20, windowMs: 60_000 });
+
+    if (!mine.ok || !everyone.ok) {
+      const wait = Math.max(mine.retryAfter || 0, everyone.retryAfter || 0) || 30;
+      return NextResponse.json(
+        { error: `Slow down a bit. Try again in ${wait} seconds.` },
+        { status: 429, headers: { "Retry-After": String(wait) } }
+      );
+    }
+
     const body = await request.json();
     const message = (body.message || "").toString().trim().slice(0, 500);
     if (message.length < 5) {
