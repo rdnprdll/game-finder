@@ -1,4 +1,5 @@
 # Game Finder
+![CI](https://github.com/rdnprdll/game-finder/actions/workflows/ci.yml/badge.svg)
 
 A website that recommends games. You type what you like and what you play on, like "I liked Hades and Hollow Knight, something similar on PC", and it gives you 5 games with a short reason for each one.
 

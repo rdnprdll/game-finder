@@ -1,8 +1,8 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { askAI, parseJson } from "@/lib/ai";
 import { fetchGames, GENRES, PLATFORMS } from "@/lib/rawg";
-import { rateLimit } from "@/lib/rateLimit";
-import { cacheGet, cacheSet } from "@/lib/cache";
+import { limit, getCached, setCached } from "@/lib/store";
 
 export const maxDuration = 60;
 
@@ -26,11 +26,13 @@ Rules: use the exact id from the list. Never add games that are not in the list.
 const LIGHT_DATES = "1990-01-01,2020-12-31";
 const HOUR = 60 * 60 * 1000;
 
+const sha = (text) => createHash("sha1").update(text).digest("hex");
+
 export async function POST(request) {
   try {
     // Per-visitor limit first
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    const mine = rateLimit(`ip:${ip}`, { limit: 5, windowMs: 60_000 });
+    const mine = await limit(`ip:${ip}`, { limit: 5, windowMs: 60_000 });
     if (!mine.ok) {
       return NextResponse.json(
         { error: `Slow down a bit. Try again in ${mine.retryAfter} seconds.` },
@@ -60,15 +62,16 @@ export async function POST(request) {
 
     // Same search again? Answer from cache, no AI needed
     const norm = message.toLowerCase().replace(/\s+/g, " ");
-    const resultKey = `r:${norm}|${light}|${[...exclude].sort((a, b) => a - b).join(",")}`;
-    const cachedResult = cacheGet(resultKey);
+    const excludeKey = [...exclude].sort((a, b) => a - b).join(",");
+    const resultKey = `gf:r:${sha(`${norm}|${light}|${excludeKey}`)}`;
+    const cachedResult = await getCached(resultKey);
     if (cachedResult) {
       console.log("[cache] result hit");
       return NextResponse.json({ games: cachedResult, cached: true });
     }
 
     // Site-wide limit only applies when we actually need the AI
-    const everyone = rateLimit("global", { limit: 20, windowMs: 60_000 });
+    const everyone = await limit("global", { limit: 20, windowMs: 60_000 });
     if (!everyone.ok) {
       return NextResponse.json(
         { error: `Lots of people are using this right now. Try again in ${everyone.retryAfter} seconds.` },
@@ -77,8 +80,8 @@ export async function POST(request) {
     }
 
     // Step 1: message -> filters (cached for 24h)
-    const filterKey = `f:${norm}`;
-    let raw = cacheGet(filterKey);
+    const filterKey = `gf:f:${sha(norm)}`;
+    let raw = await getCached(filterKey);
     if (!raw) {
       const filterText = await askAI({
         system: FILTER_SYSTEM,
@@ -86,7 +89,7 @@ export async function POST(request) {
         maxTokens: 300,
       });
       raw = parseJson(filterText);
-      cacheSet(filterKey, raw, 24 * HOUR);
+      await setCached(filterKey, raw, 24 * HOUR);
     } else {
       console.log("[cache] filter hit");
     }
@@ -151,7 +154,7 @@ export async function POST(request) {
       );
     }
 
-    cacheSet(resultKey, games, HOUR);
+    await setCached(resultKey, games, HOUR);
     return NextResponse.json({ games });
   } catch (err) {
     console.error(err);
